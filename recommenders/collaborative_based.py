@@ -42,8 +42,34 @@ movies_df = pd.read_csv('resources/data/movies.csv',sep = ',',delimiter=',')
 ratings_df = pd.read_csv('resources/data/ratings.csv')
 ratings_df.drop(['timestamp'], axis=1,inplace=True)
 
+# Importing data
+#movies_df = pd.read_csv(r'C:\Users\W7024942\Documents\Data_Science\Sprint 7\unsupervised-predict-streamlit-template-master\unsupervised-predict-streamlit-template-master\resources\data\movies.csv', sep = ',',delimiter=',')
+#ratings_df = pd.read_csv(r'C:\Users\W7024942\Documents\Data_Science\Sprint 7\unsupervised-predict-streamlit-template-master\unsupervised-predict-streamlit-template-master\resources\data\ratings.csv')
+#ratings_df.drop(['timestamp'], axis=1,inplace=True)
+
 # We make use of an SVD model trained on a subset of the MovieLens 10k dataset.
 model=pickle.load(open('resources/models/SVD.pkl', 'rb'))
+#model=pickle.load(open(r'C:\Users\W7024942\Documents\Data_Science\Sprint 7\unsupervised-predict-streamlit-template-master\unsupervised-predict-streamlit-template-master\resources\models\SVD.pkl', 'rb'))
+
+def data_preprocessing(subset_size):
+    """Prepare data for use within Content filtering algorithm.
+
+    Parameters
+    ----------
+    subset_size : int
+        Number of movies to use within the algorithm.
+
+    Returns
+    -------
+    Pandas Dataframe
+        Subset of movies selected for content-based filtering.
+
+    """
+    # Split genre data into individual words.
+    movies_df['keyWords'] = movies_df['genres'].str.replace('|', ' ')
+    # Subset of the data
+    movies_subset = movies_df[:subset_size]
+    return movies_subset
 
 def prediction_item(item_id):
     """Map a given favourite movie to users within the
@@ -117,6 +143,13 @@ def collab_model(movie_list,top_n=10):
         Titles of the top-n movie recommendations to the user.
 
     """
+    # Initializing the empty list of recommended movies
+    recommended_movies = []
+    data = data_preprocessing(27000)
+    # Instantiating and generating the count matrix
+    count_vec = CountVectorizer()
+    count_matrix = count_vec.fit_transform(data['keyWords'])
+    cosine_sim = cosine_similarity(count_matrix, count_matrix)
 
     indices = pd.Series(movies_df['title'])
     movie_ids = pred_movies(movie_list)
@@ -124,7 +157,7 @@ def collab_model(movie_list,top_n=10):
     for i in movie_ids :
         df_init_users=df_init_users.append(ratings_df[ratings_df['userId']==i])
     # Getting the cosine similarity matrix
-    cosine_sim = cosine_similarity(np.array(df_init_users), np.array(df_init_users))
+    #cosine_sim = cosine_similarity(np.array(df_init_users), np.array(df_init_users))
     idx_1 = indices[indices == movie_list[0]].index[0]
     idx_2 = indices[indices == movie_list[1]].index[0]
     idx_3 = indices[indices == movie_list[2]].index[0]
